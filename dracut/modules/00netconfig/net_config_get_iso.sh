@@ -17,9 +17,10 @@
 
 source /usr/lib/installmedia-lib.sh
 
-if [ -e /tmp/cloud_configs/network_config ];then
+_CONFIGS_DIR="/tmp/cloud_configs"
+if [ -e ${_CONFIGS_DIR}/network_config ];then
     warn "net_config_get_iso: Creating local network configurations, to download boot.iso."
-    source /tmp/cloud_configs/network_config
+    source ${_CONFIGS_DIR}/network_config
 
     if [ $VLAN ]; then
       warn "net_config_get_iso: Configuring VLAN network"
@@ -75,9 +76,13 @@ if [ -e /tmp/cloud_configs/network_config ];then
         fi
         gw_ping_status=$?
     done
-    
+
+    CERT_ARGS=""
+    if [ -f ${_CONFIGS_DIR}/clientcert.pem ]; then
+        CERT_ARGS="--certificate ${_CONFIGS_DIR}/clientcert.pem --private-key ${_CONFIGS_DIR}/clientkey.pem --ca-certificate ${_CONFIGS_DIR}/cacert.pem --no-check-certificate"
+    fi 
     warn "Downloading Full ISO from URL: ${ISO_URL}"
-    if ! wget --connect-timeout 5 --read-timeout 100 --no-check-certificate ${ISO_URL} --progress=dot:giga -O $BOOTCD_LOCATION; then
+    if ! wget --connect-timeout 5 --read-timeout 100 ${CERT_ARGS} --no-check-certificate ${ISO_URL} --progress=dot:giga -O $BOOTCD_LOCATION; then
         warn "net_config_get_iso: Failed to download ISO from URL: ${ISO_URL}. Exiting installation."
         exit 1
     fi
