@@ -116,7 +116,7 @@ iscsiadm -m fw >/dev/null 2>&1
 if [[ $? == 0 ]]; then
   kernel_cmdline="${kernel_cmdline} rd.iscsi.firmware=1 rd.retry=30"
 fi
-if grep -q "^GRUB_CMDLINE_LINUX" /sysroot/etc/default/grub; then
+if grep -q "^GRUB_CMDLINE_LINUX=" /sysroot/etc/default/grub; then
   sed -i "s/^\(GRUB_CMDLINE_LINUX=.*\)\"$/\1 $kernel_cmdline\"/g" /sysroot/etc/default/grub
 else
   echo "GRUB_CMDLINE_LINUX=\"$kernel_cmdline\"" >> /sysroot/etc/default/grub
