@@ -30,7 +30,7 @@ depends ()
 
 installkernel()
 {
-    instmods = sr_mod mpt3sas raid_class scsi_transport_sas weak-updates/be2iscsi/be2iscsi ipmi_msghandler ipmi_devintf ipmi_si
+    instmods = sr_mod mpt3sas raid_class scsi_transport_sas weak-updates/be2iscsi/be2iscsi ipmi_msghandler ipmi_devintf ipmi_ssif
 }
 
 install_python_module() {
@@ -48,7 +48,7 @@ install_python_module() {
 }
 
 install() {
-    dracut_install df du partprobe parted gunzip ip gzip fdisk find lsmod loadkeys iscsid iscsiadm sync qemu-img sgdisk python ipmitool
+    dracut_install df du partprobe parted gunzip ip gzip fdisk find lsmod loadkeys iscsid iscsiadm sync qemu-img sgdisk python ipmitool cloud-utils
     inst_hook pre-udev 48 "$moddir/load_modules.sh"
     inst_hook pre-pivot 53 "$moddir/installmedia.sh"
     inst_simple "$moddir/installmedia-lib.sh" /usr/lib/installmedia-lib.sh

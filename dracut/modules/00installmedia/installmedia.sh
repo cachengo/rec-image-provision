@@ -58,7 +58,6 @@ while [ -z "${rootdev}" ]; do
     if [ ${count} == 20 ]; then
        break
     fi
-
 done
 
 if [ -z ${rootdev} ] || ! [ -b ${rootdev} ]; then
@@ -77,7 +76,7 @@ for hd_dev in ${hd_devices[@]}; do
     if [ -b /dev/$hd_dev ] && (( is_removable $hd_dev ) || ( is_partition $hd_dev ) || ( is_loop $hd_dev )); then
         logmsg "Removable, loop or partition $hd_dev. Skipping..."
         continue
-    elif ! [ -b /dev/$hd_dev ];then
+    elif ! [ -b /dev/$hd_dev ];then
         continue
     fi
     logmsg "Erasing existing GPT and MBR data structures from ${hd_dev}"
@@ -89,7 +88,7 @@ logmsg "Dumping $DEVICE_MOUNT/guest-image.img to $rootdev"
 
 # limit the memory usage for qemu-img to 1 GiB
 ulimit -v 1048576
-qemu-img convert -p -t directsync -O host_device $DEVICE_MOUNT/guest-image.img $rootdev > $CONSOLE_DEV
+qemu-img convert -p -t directsync -O raw $DEVICE_MOUNT/guest-image.img $rootdev > $CONSOLE_DEV
 if [ $? -ne 0 ]; then
     logmsg "Failed to dump image to disk... Failing installation."
     exit 255
@@ -99,12 +98,16 @@ sync
 logmsg "${rootdev} dumped successfully!"
 echo "Finishing installation... Please wait." > $CONSOLE_DEV
 
+sgdisk -e ${rootdev}
+sleep 3
 partprobe ${rootdev}
 # create a new partion for LVMs before rootfs expands till end
-parted ${rootdev} --script -- mkpart primary 50GiB -1
+parted ${rootdev} --script -a optimal -- mkpart primary 50GiB -1
 partprobe ${rootdev}
 
-mount ${rootdev}1 /sysroot/
+sleep 3
+mount ${rootdev}3 /sysroot/
+mount ${rootdev}1 /sysroot/boot/efi
 if [ $? -ne 0 ];then
     logmsg "FAILED TO MOUNT SYSROOT. All hope is lost"
     exit 255
@@ -125,11 +128,10 @@ fi
 run_crit mount -o bind /dev /sysroot/dev
 run_crit mount -o bind /proc /sysroot/proc
 run_crit mount -o bind /sys /sysroot/sys
-run_crit chroot /sysroot /bin/bash -c \"/usr/sbin/grub2-mkconfig -o /boot/grub2/grub.cfg\"
+run_crit chroot /sysroot /bin/bash -c \"/usr/sbin/grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg\"
 
 logmsg "Extending partition and filesystem size"
-run_crit chroot /sysroot /bin/bash -c \"growpart ${rootdev} 1\"
-run_crit chroot /sysroot /bin/bash -c \"xfs_growfs /\"
+run_crit chroot /sysroot /bin/bash -c \"growpart ${rootdev} 3\"
 
 logmsg "Copying cloud guest image"
 mkdir -p $IMAGE_DIR
