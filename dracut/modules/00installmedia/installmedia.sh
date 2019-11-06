@@ -132,6 +132,7 @@ run_crit chroot /sysroot /bin/bash -c \"/usr/sbin/grub2-mkconfig -o /boot/efi/EF
 
 logmsg "Extending partition and filesystem size"
 run_crit chroot /sysroot /bin/bash -c \"growpart ${rootdev} 3\"
+run_crit chroot /sysroot /bin/bash -c \"resize2fs ${rootdev}3\"
 
 logmsg "Copying cloud guest image"
 mkdir -p $IMAGE_DIR
